@@ -8,16 +8,108 @@ var ATTACK_PIECE = {
 }
 
 function move_direction(fen,pos,direction){
-
-    return []
+    possible_moves_givenDirection = []
+    board = generate_board(fen)
+    pos_num = coordinate_to_number(pos)
+    column = pos[0].charCodeAt(0) - 'a'.charCodeAt(0)
+    row = 8 - parseInt(pos[1])
+    if(direction === '7' || direction === '0' || direction === '1' )
+        vertical = -1
+    else if(direction === '6' || direction === '2')
+        vertical = 0
+    else
+        vertical = 1
+    if(direction === '5' || direction === '6' || direction === '7' )
+        horizontal = -1
+    else if(direction === '0' || direction === '4')
+        horizontal = 0
+    else
+        horizontal = 1
+    increement = 1
+    column += increement * horizontal
+    row += increement * vertical
+    while( 0 <= column && column <= 7 && 0 <= row && row <= 7 ){
+        if(board[column + row * 8].color !== board[pos_num].color){
+            temp1 = board[pos_num + straight_move - 1]
+            board[pos_num + straight_move - 1] = board[pos_num]
+            board[pos_num] = null
+            possible_moves_givenDirection.push(generate_fen(board))
+            board[pos_num] = board[pos_num + straight_move - 1]
+            board[pos_num + straight_move - 1] = temp1
+            break
+        }
+        if(board[column + row * 8] === null){
+            board[pos_num + straight_move - 1] = board[pos_num]
+            board[pos_num] = null
+            possible_moves.push(generate_fen(board))
+            board[pos_num] = board[pos_num + straight_move - 1]
+            board[pos_num + straight_move - 1] = null
+        }
+        column += increement * horizontal
+        row += increement * vertical
+    }
+    return possible_moves_givenDirection
 }
 
 function generate_possible_moves(fen,pos){
+    board = generate_board(fen)
+    pos_num = coordinate_to_number(pos)
+    piece , color = board[pos_num].piece , board[pos_num].color;
     possible_moves = []
-    if(piece == 'p'){
-        
+    if(piece === 'p'){
+        straight_move = color === 'w' ? -8 : 8
+        if(board[pos_num + straight_move] === null){
+            rank = parseInt(pos[1]) + 1
+            if(rank === 8 && color === 'w' || rank === 1 && color === 'b' ){
+                change_piece = ['q' , 'r' , 'b' , 'n']
+                for(new_piece in change_piece){
+                    board[pos_num + straight_move] = {
+                        piece : new_piece,
+                        color : color
+                    }
+                    board[pos_num] = null
+                    possible_moves.push(generate_fen(board))
+                }
+            }
+            else{
+                board[pos_num + straight_move] = board[pos_num]
+                board[pos_num] = null
+                possible_moves.push(generate_fen(board))
+            }
+            board[pos_num] = {
+                piece : piece,
+                color : color
+            }
+            board[pos_num + straight_move] = null
+            rank = parseInt(pos[1])
+            if( ( (rank === 2 && color ==='w') || (rank === 7 && color ==='b')) && board[pos_num + 2 * straight_move] === null){
+                board[pos_num + 2 * straight_move] = board[pos_num]
+                board[pos_num] = null
+                possible_moves.push(generate_fen(board))
+                board[pos_num] = board[pos_num + 2 * straight_move]
+                board[pos_num + 2 * straight_move] = null
+            }
+        }
+        column = pos[0].charCodeAt(0) - 'a'.charCodeAt(0)
+        rank = parseInt(pos[1])
+        if(column > 0 && board[pos_num + straight_move - 1] !== null && board[pos_num + straight_move - 1].color !== color){
+            temp1 = board[pos_num + straight_move - 1]
+            board[pos_num + straight_move - 1] = board[pos_num]
+            board[pos_num] = null
+            possible_moves.push(generate_fen(board))
+            board[pos_num] = board[pos_num + straight_move - 1]
+            board[pos_num + straight_move - 1] = temp1
+        }
+        if(column < 7 && board[pos_num + straight_move + 1] !== null && board[pos_num + straight_move + 1].color !== color){
+            temp1 = board[pos_num + straight_move + 1]
+            board[pos_num + straight_move + 1] = board[pos_num]
+            board[pos_num] = null
+            possible_moves.push(generate_fen(board))
+            board[pos_num] = board[pos_num + straight_move + 1]
+            board[pos_num + straight_move + 1] = temp1
+        }
     }
-    if(piece == 'n'){
+    if(piece === 'n'){
         KNIGHT_MOVES = [
             [1,2],
             [-1,2],
@@ -37,7 +129,6 @@ function generate_possible_moves(fen,pos){
                 //console.log(column,rank)
                 //console.log(temp_pos)
                 number = column + (8 - rank) * 8
-                pos_num = coordinate_to_number(pos)
                 if(board[number] === null || board[pos_num].color !== board[number].color){
                     temp1 = board[number]
                     board[number] = board[pos_num]
@@ -49,19 +140,19 @@ function generate_possible_moves(fen,pos){
             }
         }
     }
-    if(piece == 'b'){
+    if(piece === 'b'){
         for(i = 1 ; i < 8 ; i += 2)
             possible_moves += move_direction(fen,pos,i)
     }
-    if(piece == 'r'){
+    if(piece ==='r'){
         for(i = 0 ; i < 8 ; i += 2)
             possible_moves += move_direction(fen,pos,i)
     }
-    if(piece == 'q'){
+    if(piece ==='q'){
         for(i = 0 ; i < 8 ; i++)
             possible_moves += move_direction(fen,pos,i)
     }
-    if(piece == 'k'){
+    if(piece === 'k'){
         
     }
     return possible_moves 
