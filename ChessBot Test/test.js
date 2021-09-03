@@ -51,24 +51,34 @@ function move_direction(fen,pos,direction){
     return possible_moves_givenDirection
 }
 
+function pawn_last_position(board, pos_num,color){
+    const change_piece = ['q' , 'r' , 'b' , 'n']
+    pawn_change = []
+    for(let i = 0 ; i < 4 ; i++){
+        board[pos_num] = {
+            piece : change_piece[i],
+            color : color
+        }
+        pawn_change.push(generate_fen(board))
+    }
+    return pawn_change
+}
+
 function generate_possible_moves(fen,pos){
-    board = generate_board(fen)
-    pos_num = coordinate_to_number(pos)
-    piece , color = board[pos_num].piece , board[pos_num].color;
-    possible_moves = []
+    const board = generate_board(fen)
+    var pos_num = coordinate_to_number(pos)
+    var piece = board[pos_num].piece
+    var color =  board[pos_num].color
+    const possible_moves = []
     if(piece === 'p'){
         straight_move = color === 'w' ? -8 : 8
-        if(board[pos_num + straight_move] === null){
-            rank = parseInt(pos[1]) + 1
+        if(!board[pos_num + straight_move]){
+            rank = parseInt(pos[1]) - (straight_move / 8)
             if(rank === 8 && color === 'w' || rank === 1 && color === 'b' ){
-                change_piece = ['q' , 'r' , 'b' , 'n']
-                for(new_piece in change_piece){
-                    board[pos_num + straight_move] = {
-                        piece : new_piece,
-                        color : color
-                    }
-                    board[pos_num] = null
-                    possible_moves.push(generate_fen(board))
+                board[pos_num] = null
+                let pawn_changes = pawn_last_position(board,pos_num + straight_move,color)
+                for(let i = 0 ; i < 4 ; i++){
+                    possible_moves.push(pawn_changes[i])
                 }
             }
             else{
@@ -82,7 +92,7 @@ function generate_possible_moves(fen,pos){
             }
             board[pos_num + straight_move] = null
             rank = parseInt(pos[1])
-            if( ( (rank === 2 && color ==='w') || (rank === 7 && color ==='b')) && board[pos_num + 2 * straight_move] === null){
+            if( ( (rank === 2 && color ==='w') || (rank === 7 && color ==='b')) && !board[pos_num + 2 * straight_move]){
                 board[pos_num + 2 * straight_move] = board[pos_num]
                 board[pos_num] = null
                 possible_moves.push(generate_fen(board))
@@ -92,25 +102,41 @@ function generate_possible_moves(fen,pos){
         }
         column = pos[0].charCodeAt(0) - 'a'.charCodeAt(0)
         rank = parseInt(pos[1])
-        if(column > 0 && board[pos_num + straight_move - 1] !== null && board[pos_num + straight_move - 1].color !== color){
+        if(column > 0 && board[pos_num + straight_move - 1] && board[pos_num + straight_move - 1].color !== color){
             temp1 = board[pos_num + straight_move - 1]
             board[pos_num + straight_move - 1] = board[pos_num]
             board[pos_num] = null
-            possible_moves.push(generate_fen(board))
+            let next_pos_rank = rank - (straight_move / 8)
+            if(next_pos_rank === 8 && color === 'w' || next_pos_rank === 1 && color === 'b' ){
+                let pawn_changes = pawn_last_position(board,pos_num + straight_move - 1,color)
+                for(let i = 0 ; i < 4 ; i++){
+                    possible_moves.push(pawn_changes[i])
+                }
+            }
+            else
+                possible_moves.push(generate_fen(board))
             board[pos_num] = board[pos_num + straight_move - 1]
             board[pos_num + straight_move - 1] = temp1
         }
-        if(column < 7 && board[pos_num + straight_move + 1] !== null && board[pos_num + straight_move + 1].color !== color){
+        if(column < 7 && board[pos_num + straight_move + 1] && board[pos_num + straight_move + 1].color !== color){
             temp1 = board[pos_num + straight_move + 1]
             board[pos_num + straight_move + 1] = board[pos_num]
             board[pos_num] = null
-            possible_moves.push(generate_fen(board))
+            let next_pos_rank = rank - (straight_move / 8)
+            if(next_pos_rank === 8 && color === 'w' || next_pos_rank === 1 && color === 'b' ){
+                let pawn_changes = pawn_last_position(board,pos_num + straight_move + 1,color)
+                for(let i = 0 ; i < 4 ; i++){
+                    possible_moves.push(pawn_changes[i])
+                }
+            }
+            else
+                possible_moves.push(generate_fen(board))
             board[pos_num] = board[pos_num + straight_move + 1]
             board[pos_num + straight_move + 1] = temp1
         }
     }
     if(piece === 'n'){
-        KNIGHT_MOVES = [
+        var KNIGHT_MOVES = [
             [1,2],
             [-1,2],
             [1,-2],
@@ -120,16 +146,13 @@ function generate_possible_moves(fen,pos){
             [2,-1],
             [-2,-1]
         ]
-        for(i = 0 ; i < 8 ; i++){
-            board = generate_board(fen)
+        for(let i = 0 ; i < 8 ; i++){
             column = pos[0].charCodeAt(0) - 'a'.charCodeAt(0) + KNIGHT_MOVES[i][0]
             rank = parseInt(pos[1]) + parseInt(KNIGHT_MOVES[i][1])
             if( 0 <= column && column <= 7 && 1 <= rank && rank <= 8 ){
                 temp_pos = '' + String.fromCharCode(column + 'a'.charCodeAt(0)) + rank
-                //console.log(column,rank)
-                //console.log(temp_pos)
                 number = column + (8 - rank) * 8
-                if(board[number] === null || board[pos_num].color !== board[number].color){
+                if(!board[number] || board[pos_num].color !== board[number].color){
                     temp1 = board[number]
                     board[number] = board[pos_num]
                     board[pos_num] = null 
@@ -138,18 +161,19 @@ function generate_possible_moves(fen,pos){
                     board[number] = temp1
                 }
             }
+            
         }
     }
     if(piece === 'b'){
-        for(i = 1 ; i < 8 ; i += 2)
+        for(let i = 1 ; i < 8 ; i += 2)
             possible_moves += move_direction(fen,pos,i)
     }
     if(piece ==='r'){
-        for(i = 0 ; i < 8 ; i += 2)
+        for(let i = 0 ; i < 8 ; i += 2)
             possible_moves += move_direction(fen,pos,i)
     }
     if(piece ==='q'){
-        for(i = 0 ; i < 8 ; i++)
+        for(let i = 0 ; i < 8 ; i++)
             possible_moves += move_direction(fen,pos,i)
     }
     if(piece === 'k'){
@@ -159,15 +183,15 @@ function generate_possible_moves(fen,pos){
 }
 
 function coordinate_to_number(square){
-    column = square[0].charCodeAt(0) - 'a'.charCodeAt(0)
-    rank = parseInt(square[1])
+    let column = square[0].charCodeAt(0) - 'a'.charCodeAt(0)
+    let rank = parseInt(square[1])
     return column + 8 * (8 - rank)
 }
 
 function number_to_coordinate(number){
-    rank = ''
+    let rank = ''
     rank += (8 - (number - number % 8) / 8)
-    column = ''
+    let column = ''
     column += String.fromCharCode(number % 8 + 'a'.charCodeAt(0))
     return column + rank
 }
@@ -179,8 +203,9 @@ function isCharNumber(c) {
 function generate_board(fen){
     const board = new Array(64)
     let list = fen.split(/\s+/)
-    j = i = 0
-    state = list[0]
+    let j = 0;
+    let i = 0;
+    let state = list[0]
     while(i < 64){
         if(state[j] === '/'){
             j++
@@ -204,7 +229,7 @@ function generate_board(fen){
 
 function generate_fen(board){
     i = 0,num = 0
-    fen = ''
+    var fen = ''
     while(i < 64){
         if(!board[i]){
             num++
@@ -256,10 +281,14 @@ function move_piece(fen,from,to,piece,color){
     return fen;
 }
 
-fen = '4q3/K2k4/4p3/P2Pr1p1/pp2r3/5p2/3n2P1/1N2Q3'
+fen = '8/8/8/8/8/8/5p2/4P1P1'
 board = generate_board(fen)
 console.log(print_board(board))
-move_piece(fen,'e1','h1','Q','w')
-console.log(print_board(board))
-move_piece(fen,'b1','a3','Q','w')
-console.log(print_board(board))
+
+ans = generate_possible_moves(fen,'f2')
+console.log(ans)
+
+console.log(ans.length)
+for (let i = 0 ; i < ans.length ; i++){
+    console.log(print_board(generate_board(ans[i])))
+}
