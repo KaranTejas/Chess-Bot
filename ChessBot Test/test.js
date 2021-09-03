@@ -8,43 +8,47 @@ var ATTACK_PIECE = {
 }
 
 function move_direction(fen,pos,direction){
-    possible_moves_givenDirection = []
-    board = generate_board(fen)
-    pos_num = coordinate_to_number(pos)
-    column = pos[0].charCodeAt(0) - 'a'.charCodeAt(0)
-    row = 8 - parseInt(pos[1])
-    if(direction === '7' || direction === '0' || direction === '1' )
+    const possible_moves_givenDirection = []
+    const board = generate_board(fen)
+    let pos_num = coordinate_to_number(pos)
+    let column = pos[0].charCodeAt(0) - 'a'.charCodeAt(0)
+    let row = 8 - parseInt(pos[1])
+    let vertical , horizontal
+    if(direction === 7 || direction === 0 || direction === 1 )
         vertical = -1
-    else if(direction === '6' || direction === '2')
+    else if(direction === 6 || direction === 2)
         vertical = 0
     else
         vertical = 1
-    if(direction === '5' || direction === '6' || direction === '7' )
+    if(direction === 5 || direction === 6 || direction === 7 )
         horizontal = -1
-    else if(direction === '0' || direction === '4')
+    else if(direction === 0 || direction === 4)
         horizontal = 0
     else
         horizontal = 1
-    increement = 1
+    let increement = 1
+    console.log(horizontal,vertical,direction)
     column += increement * horizontal
     row += increement * vertical
     while( 0 <= column && column <= 7 && 0 <= row && row <= 7 ){
-        if(board[column + row * 8].color !== board[pos_num].color){
-            temp1 = board[pos_num + straight_move - 1]
-            board[pos_num + straight_move - 1] = board[pos_num]
+        if(!board[column + row * 8]){
+            board[column + row * 8] = board[pos_num]
             board[pos_num] = null
             possible_moves_givenDirection.push(generate_fen(board))
-            board[pos_num] = board[pos_num + straight_move - 1]
-            board[pos_num + straight_move - 1] = temp1
+            board[pos_num] = board[column + row * 8]
+            board[column + row * 8] = null
+        }
+        else if(board[column + row * 8].color !== board[pos_num].color){
+            temp1 = board[column + row * 8]
+            board[column + row * 8] = board[pos_num]
+            board[pos_num] = null
+            possible_moves_givenDirection.push(generate_fen(board))
+            board[pos_num] = board[column + row * 8]
+            board[column + row * 8] = temp1
             break
         }
-        if(board[column + row * 8] === null){
-            board[pos_num + straight_move - 1] = board[pos_num]
-            board[pos_num] = null
-            possible_moves.push(generate_fen(board))
-            board[pos_num] = board[pos_num + straight_move - 1]
-            board[pos_num + straight_move - 1] = null
-        }
+        else
+            break
         column += increement * horizontal
         row += increement * vertical
     }
@@ -76,10 +80,7 @@ function generate_possible_moves(fen,pos){
             rank = parseInt(pos[1]) - (straight_move / 8)
             if(rank === 8 && color === 'w' || rank === 1 && color === 'b' ){
                 board[pos_num] = null
-                let pawn_changes = pawn_last_position(board,pos_num + straight_move,color)
-                for(let i = 0 ; i < 4 ; i++){
-                    possible_moves.push(pawn_changes[i])
-                }
+                possible_moves.push(...pawn_last_position(board,pos_num + straight_move,color))
             }
             else{
                 board[pos_num + straight_move] = board[pos_num]
@@ -108,10 +109,7 @@ function generate_possible_moves(fen,pos){
             board[pos_num] = null
             let next_pos_rank = rank - (straight_move / 8)
             if(next_pos_rank === 8 && color === 'w' || next_pos_rank === 1 && color === 'b' ){
-                let pawn_changes = pawn_last_position(board,pos_num + straight_move - 1,color)
-                for(let i = 0 ; i < 4 ; i++){
-                    possible_moves.push(pawn_changes[i])
-                }
+                possible_moves.push(...pawn_last_position(board,pos_num + straight_move - 1,color))
             }
             else
                 possible_moves.push(generate_fen(board))
@@ -124,10 +122,7 @@ function generate_possible_moves(fen,pos){
             board[pos_num] = null
             let next_pos_rank = rank - (straight_move / 8)
             if(next_pos_rank === 8 && color === 'w' || next_pos_rank === 1 && color === 'b' ){
-                let pawn_changes = pawn_last_position(board,pos_num + straight_move + 1,color)
-                for(let i = 0 ; i < 4 ; i++){
-                    possible_moves.push(pawn_changes[i])
-                }
+                possible_moves.push(...pawn_last_position(board,pos_num + straight_move + 1,color))
             }
             else
                 possible_moves.push(generate_fen(board))
@@ -166,18 +161,44 @@ function generate_possible_moves(fen,pos){
     }
     if(piece === 'b'){
         for(let i = 1 ; i < 8 ; i += 2)
-            possible_moves += move_direction(fen,pos,i)
+            possible_moves.push(...move_direction(fen,pos,i))
     }
     if(piece ==='r'){
         for(let i = 0 ; i < 8 ; i += 2)
-            possible_moves += move_direction(fen,pos,i)
+            possible_moves.push(...move_direction(fen,pos,i))
     }
     if(piece ==='q'){
         for(let i = 0 ; i < 8 ; i++)
-            possible_moves += move_direction(fen,pos,i)
+            possible_moves.push(...move_direction(fen,pos,i))
     }
     if(piece === 'k'){
-        
+        const KING_MOVES = [
+            [-1,-1],
+            [-1,0],
+            [-1,1],
+            [0,-1],
+            [0,1],
+            [1,-1],
+            [1,0],
+            [1,1]
+        ]
+        let king_column = pos_num % 8
+        let king_row = (pos_num - pos_num % 8) / 8
+        let new_column , new_row
+        for(let i = 0 ; i < 8 ; i++){
+            new_column = king_column + KING_MOVES[i][0]
+            new_row = king_row + KING_MOVES[i][1]
+            if(0 <= new_row && new_row <= 7  &&  0 <= new_column && new_column <= 7 ){
+                if(!board[new_column + new_row * 8] || board[new_column + new_row * 8].color !== color ){
+                    temp1 = board[new_column + new_row * 8]
+                    board[new_column + new_row * 8] = board[pos_num]
+                    board[pos_num] = null
+                    possible_moves.push(generate_fen(board))
+                    board[pos_num] = board[new_column + new_row * 8]
+                    board[new_column + new_row * 8] = temp1
+                }
+            }
+        }
     }
     return possible_moves 
 }
@@ -281,11 +302,11 @@ function move_piece(fen,from,to,piece,color){
     return fen;
 }
 
-fen = '8/8/8/8/8/8/5p2/4P1P1'
+fen = '5r2/PK3R2/P1Q1q3/8/5P2/BP5k/3P1bR1/1n3N2'
 board = generate_board(fen)
 console.log(print_board(board))
 
-ans = generate_possible_moves(fen,'f2')
+ans = generate_possible_moves(fen,'h3')
 console.log(ans)
 
 console.log(ans.length)

@@ -33,5 +33,9 @@ for(i = 0 ; i < 8 ; i++){
         console.log(number_to_coordinate(number))
     }
 }
+const arr = [];
+arr1 = [1,3,4];
+arr.push(...arr1)
+console.log(arr)
 //console.log(coordinate_to_number('f3'))
 //console.log(number_to_coordinate(45))
