@@ -1,4 +1,4 @@
-var ATTACK_PIECE = {
+var PIECE_WEIGHT = {
     p: 10,
     n: 30,
     b: 30,
@@ -27,7 +27,6 @@ function move_direction(fen,pos,direction){
     else
         horizontal = 1
     let increement = 1
-    console.log(horizontal,vertical,direction)
     column += increement * horizontal
     row += increement * vertical
     while( 0 <= column && column <= 7 && 0 <= row && row <= 7 ){
@@ -203,6 +202,31 @@ function generate_possible_moves(fen,pos){
     return possible_moves 
 }
 
+function generate_moves_each_step(fen,n,color){
+    let pos, board
+    let moves_each_step = []
+    let moves_all_step = [[fen]]
+    for(let i = 0 ; i < n ; i++){
+        temp_moves = moves_all_step
+        moves_all_step = []
+        for(let j = 0 ; j < temp_moves.length ; j++){
+            moves_each_step = []
+            for(let l = 0 ; l < 63 ; l++){
+                pos = number_to_coordinate(l)
+                board = generate_board(temp_moves[j][i])
+                if(board[l] && ((i % 2 === 0 && board[l].color === color) || (i % 2 === 1 && board[l].color !== color))){
+                    console.log(i,board[l])
+                    moves_each_step.push(...generate_possible_moves(temp_moves[j][i],pos))
+                }
+            }
+            for(let move_step = 0 ; move_step < moves_each_step.length ; move_step++){
+                moves_all_step.push([...temp_moves[j],moves_each_step[move_step]])
+            }
+        }
+    }
+    return moves_all_step
+}
+
 function coordinate_to_number(square){
     let column = square[0].charCodeAt(0) - 'a'.charCodeAt(0)
     let rank = parseInt(square[1])
@@ -292,24 +316,46 @@ function print_board(board){
     return rows
 }
 
-function move_piece(fen,from,to,piece,color){
-    board = generate_board(fen)
+function move_piece(fen,from,to,color){
+    let board = generate_board(fen)
+    if(!board[coordinate_to_number(from)] || board[coordinate_to_number(from)].color !== color)
+        return null
     board[coordinate_to_number(to)] = board[coordinate_to_number(from)]
     board[coordinate_to_number(from)] = null
-    fen = generate_fen(board)
-    //if(check(fen,from,to,piece,color))
-        //return null;
-    return fen;
+    let temp_fen = generate_fen(board)
+    valid_states = generate_possible_moves(fen,from)
+    for(let i = 0 ; i < valid_states.length ; i++){
+        if(temp_fen === valid_states[i])
+            return temp_fen
+    }
+    return null
 }
 
-fen = '5r2/PK3R2/P1Q1q3/8/5P2/BP5k/3P1bR1/1n3N2'
-board = generate_board(fen)
+let fen = 'k7/5p2/3n4/3PP3/N1N2PPK/p5r1/2pQ2q1/7b'
+let board = generate_board(fen)
 console.log(print_board(board))
-
+/*
 ans = generate_possible_moves(fen,'h3')
 console.log(ans)
 
 console.log(ans.length)
 for (let i = 0 ; i < ans.length ; i++){
     console.log(print_board(generate_board(ans[i])))
+}
+
+*/
+
+
+/*
+ans = generate_moves_each_step(fen,1,'w')
+console.log(ans)
+*/
+
+fen = move_piece(fen,'c4','b6','w')
+if (fen){
+    board = generate_board(fen)
+    console.log(print_board(board))
+}
+else{
+    console.log(fen)
 }
