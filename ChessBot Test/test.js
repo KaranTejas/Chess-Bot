@@ -310,7 +310,7 @@ function generate_fen(board){
 
 function print_board(board){
     const rows = []
-    i = 0
+    let i = 0, piece
     let column = ''
     while(i < 64){
         if(!board[i])
