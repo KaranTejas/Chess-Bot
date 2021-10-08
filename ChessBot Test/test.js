@@ -1,11 +1,24 @@
 var PIECE_WEIGHT = {
-    p: 10,
-    n: 30,
-    b: 30,
-    r: 50,
-    q: 90,
-    k: 900 
+    p: -10,
+    n: -30,
+    b: -30,
+    r: -50,
+    q: -90,
+    k: -900,
+    P: 10,
+    N: 30,
+    B: 30,
+    R: 50,
+    Q: 90,
+    K: 900 
 }
+
+let turn
+let bot, player
+let player_color = ['w','b']
+let game_board,game_fen
+let difficulty_level
+
 
 function move_direction(fen,pos,direction){
     const possible_moves_givenDirection = []
@@ -215,7 +228,6 @@ function generate_moves_each_step(fen,n,color){
                 pos = number_to_coordinate(l)
                 board = generate_board(temp_moves[j][i])
                 if(board[l] && ((i % 2 === 0 && board[l].color === color) || (i % 2 === 1 && board[l].color !== color))){
-                    console.log(i,board[l])
                     moves_each_step.push(...generate_possible_moves(temp_moves[j][i],pos))
                 }
             }
@@ -331,6 +343,80 @@ function move_piece(fen,from,to,color){
     return null
 }
 
+function board_value(fen){
+    let value = 0
+    for(let i = 0 ; i < fen.length ; i++){
+        if((/[a-zA-Z]/).test(fen[i])){
+            value += PIECE_WEIGHT[fen[i]]
+        }
+    }
+    return value
+}
+
+function next_move(possible_moves,start,end,level,cur_level,color){
+    if(start === end){
+        //console.log(possible_moves[start][level],board_value(possible_moves[start][level]))
+        return [[],board_value(possible_moves[start][level])]
+    }
+    let temp_start = start
+    let new_start,new_end
+    let value = -10000
+    for(let i = start ; i < end ; i++){
+        if(i === end - 1 || possible_moves[i][cur_level] !== possible_moves[temp_start][cur_level]){
+            [_ , temp_value] = next_move(possible_moves,temp_start,i - 1,level,cur_level + 1, color === 'w' ? 'b' : 'w')
+            if(value === -10000){
+                new_start = temp_start
+                new_end = i - 1
+                value = temp_value
+                temp_start = i
+                continue
+            }
+            if(color === 'w'){
+                if(temp_value > value){
+                    new_start = temp_start
+                    new_end = i - 1
+                    value = temp_value
+                }
+            }
+            else {
+                if(temp_value < value){
+                    new_start = temp_start
+                    new_end = i - 1
+                    value = temp_value
+                }
+            }
+            temp_start = i
+        }
+    }
+    if(cur_level === 1){
+        return [possible_moves.slice(new_start,new_end + 1),value]
+    }
+    return [[],value]
+}
+
+function initialize_game(){
+    game_fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR'
+    game_board = generate_board(game_fen)
+    bot = 1
+    player = 0
+    difficulty_level = 2
+}
+
+function bot_move(){
+    let possible_moves = generate_moves_each_step(game_fen , difficulty_level , player_color[bot])
+    let temp = next_move(possible_moves , 0 , possible_moves.length - 1 , difficulty_level , 1 , player_color[bot])
+    game_fen = temp[0][0][1]
+    game_board = generate_board(game_fen)
+}
+
+function player_move(from , to){
+    let temp = move_piece(game_fen , from , to , player_color[player])
+    if(temp){
+        game_fen = temp
+        game_board = generate_board(game_fen)
+    }
+}
+
 let fen = 'k7/5p2/3n4/3PP3/N1N2PPK/p5r1/2pQ2q1/7b'
 let board = generate_board(fen)
 console.log(print_board(board))
@@ -346,11 +432,12 @@ for (let i = 0 ; i < ans.length ; i++){
 */
 
 
-/*
-ans = generate_moves_each_step(fen,1,'w')
-console.log(ans)
-*/
+ans = generate_moves_each_step(fen,3,'w')
+console.log(ans.length)
 
+console.log(next_move(ans,0,ans.length - 1,3,1,'w'))
+
+/*
 fen = move_piece(fen,'c4','b6','w')
 if (fen){
     board = generate_board(fen)
@@ -359,3 +446,4 @@ if (fen){
 else{
     console.log(fen)
 }
+*/
