@@ -399,11 +399,12 @@ function initialize_game(){
     game_board = generate_board(game_fen)
     bot = 1
     player = 0
-    difficulty_level = 2
+    difficulty_level = 1
 }
 
 function bot_move(){
     let possible_moves = generate_moves_each_step(game_fen , difficulty_level , player_color[bot])
+    console.log(1,game_fen,possible_moves)
     let temp = next_move(possible_moves , 0 , possible_moves.length - 1 , difficulty_level , 1 , player_color[bot])
     game_fen = temp[0][0][1]
     game_board = generate_board(game_fen)
@@ -417,9 +418,9 @@ function player_move(from , to){
     }
 }
 
-let fen = 'k7/5p2/3n4/3PP3/N1N2PPK/p5r1/2pQ2q1/7b'
-let board = generate_board(fen)
-console.log(print_board(board))
+//let fen = 'k7/5p2/3n4/3PP3/N1N2PPK/p5r1/2pQ2q1/7b'
+//let board = generate_board(fen)
+//console.log(print_board(board))
 /*
 ans = generate_possible_moves(fen,'h3')
 console.log(ans)
@@ -432,10 +433,10 @@ for (let i = 0 ; i < ans.length ; i++){
 */
 
 
-ans = generate_moves_each_step(fen,3,'w')
-console.log(ans.length)
+//ans = generate_moves_each_step(fen,3,'w')
+//console.log(ans.length)
 
-console.log(next_move(ans,0,ans.length - 1,3,1,'w'))
+//console.log(next_move(ans,0,ans.length - 1,3,1,'w'))
 
 /*
 fen = move_piece(fen,'c4','b6','w')
@@ -447,3 +448,7 @@ else{
     console.log(fen)
 }
 */
+
+initialize_game()
+bot_move()
+console.log(print_board(game_board))
