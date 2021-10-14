@@ -1,3 +1,8 @@
+.game-display{
+    display : grid;
+    grid-template-columns: 1fr 2fr 1fr;
+}
+
 .chessboard {
     display: block;
     width: 640px;
@@ -35,21 +40,19 @@
     display: flex;
     flex-direction: column;
     width: 200px;
+    height: 100px;
     padding: 1em;
     align-items: center;
-    margin-left: auto;
-    margin-right: auto;
-    margin-bottom: 2em;
+    margin: auto;
 }
 
 .bot-move{
     display: flex;
     flex-direction: column;
     border: 1px solid black;
-    margin-right: auto;
-    margin-left: auto;
-    margin-bottom: 1em;
+    margin: auto;
     width: 200px;
+    height: 100px;
     align-items: center;
     padding: 1em;
 }

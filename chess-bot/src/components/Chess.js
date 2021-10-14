@@ -314,56 +314,91 @@ function generate_possible_moves(fen,pos){
     return possible_moves 
 }
 
+function shuffleArray(array) {
+
+    for (let i = array.length - 1; i > 0; i--){
+
+      const j = Math.floor(Math.random() * (i + 1));
+      const temp = array[i];
+      array[i] = array[j];
+      array[j] = temp;
+
+    }
+
+}
+
 function generate_moves_each_step(fen,n,color){
     let pos, board
     let moves_each_step = []
     let moves_all_step = [[fen]], temp_moves
+
     for(let i = 0 ; i < n ; i++){
+
         temp_moves = moves_all_step
         moves_all_step = []
+
         for(let j = 0 ; j < temp_moves.length ; j++){
+
             moves_each_step = []
+
             for(let l = 0 ; l < 63 ; l++){
+
                 pos = number_to_coordinate(l)
                 board = generate_board(temp_moves[j][i])
+
                 if(board[l] && ((i % 2 === 0 && board[l].color === color) || (i % 2 === 1 && board[l].color !== color))){
                     moves_each_step.push(...generate_possible_moves(temp_moves[j][i],pos))
                 }
+
             }
+
+            shuffleArray(moves_each_step);
+
             for(let move_step = 0 ; move_step < moves_each_step.length ; move_step++){
                 moves_all_step.push([...temp_moves[j],moves_each_step[move_step]])
             }
+
         }
+
     }
+
     return moves_all_step
 }
 
 function move_piece(fen,from,to,color){
     let board = generate_board(fen)
+
     if(!board[coordinate_to_number(from)] || board[coordinate_to_number(from)].color !== color)
         return null
+
     board[coordinate_to_number(to)] = board[coordinate_to_number(from)]
     board[coordinate_to_number(from)] = null
     let temp_fen = generate_fen(board)
     let valid_states = generate_possible_moves(fen,from)
+
     for(let i = 0 ; i < valid_states.length ; i++){
+
         if(temp_fen === valid_states[i])
             return temp_fen
     }
+
     return null
 }
 
 function next_move(possible_moves,start,end,level,cur_level,color){
-    //console.log(2,game_fen)
+
     if(start === end){
         return [[],board_value(possible_moves[start][level])]
     }
     let temp_start = start
     let new_start,new_end
     let value = -10000, temp_value, _
+
     for(let i = start ; i < end ; i++){
+
         if(i === end - 1 || possible_moves[i][cur_level] !== possible_moves[temp_start][cur_level]){
             [_ , temp_value] = next_move(possible_moves,temp_start,i - 1,level,cur_level + 1, color === 'w' ? 'b' : 'w')
+
             if(value === -10000){
                 new_start = temp_start
                 new_end = i - 1
@@ -371,70 +406,134 @@ function next_move(possible_moves,start,end,level,cur_level,color){
                 temp_start = i
                 continue
             }
+
             if(color === 'w'){
+
                 if(temp_value > value){
                     new_start = temp_start
                     new_end = i - 1
                     value = temp_value
                 }
+
             }
             else {
+
                 if(temp_value < value){
                     new_start = temp_start
                     new_end = i - 1
                     value = temp_value
                 }
+
             }
+
             temp_start = i
+
         }
+
     }
+
     if(cur_level === 1){
         return [possible_moves.slice(new_start,new_end + 1),value]
     }
+
     return [[],value]
+}
+
+function check(fen, color){
+    let possible_moves = generate_moves_each_step(fen,1,color === 'w' ? 'b' : 'w')
+    let temp, flag
+
+    for(let i = 0 ; i < possible_moves.length ; i++){
+        temp = generate_board(possible_moves[i][1])
+        flag = false
+
+        for(let j = 0 ; j < 63 ; j++){
+            if(temp[j] && temp[j].color === color && temp[j].piece === 'k'){
+                flag = true
+                break
+            } 
+        }
+
+        if(flag === false)
+            return true
+    }
+
+    return false
 }
 
 let player_color = ['w','b'];
 let difficulty_level
 let bot, player
+let turn
 
 function Chess() {
     const [game_fen, setGame_fen] = useState('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR');
     const [game_board, setGame_board] = useState();
 
     function initialize_game(){
+
         setGame_fen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR')
         setGame_board(generate_board(game_fen))
+        turn = 0
         bot = 1
         player = 0
         difficulty_level = 2
+
     }
-    
+
     function bot_move(){
-        let possible_moves = generate_moves_each_step(game_fen , difficulty_level , player_color[bot])
-        let temp = next_move(possible_moves , 0 , possible_moves.length - 1 , difficulty_level , 1 , player_color[bot])
+
+        if(turn === player)
+            return
+
+        let possible_moves
+        let temp, check_temp
+
+        //-----------------------------------------
+        let count = 0
+        //-----------------------------------------
+
+        check_temp = generate_moves_each_step(game_fen , 1 , player_color[bot])
+        
+        do{
+            possible_moves = generate_moves_each_step(game_fen , difficulty_level , player_color[bot])
+            temp = next_move(possible_moves , 0 , possible_moves.length - 1 , difficulty_level , 1 , player_color[bot])
+            count++
+
+            if(count > check_temp.length)
+                return
+
+        }while(check(temp[0][0][1] , player_color[bot]))
 
         setGame_fen(temp[0][0][1])
         setGame_board(generate_board(game_fen))
+        //turn = player
     }
     
     function player_move(from , to, player){
+
+        if(turn === bot)
+            return
+
         let temp = move_piece(game_fen , from , to , player_color[player])
+
+        if(check(temp, player_color[player])){
+            return
+        }
+
         if(temp){
             setGame_fen(temp)
             setGame_board(generate_board(game_fen))
+            turn = bot
         }
+
     }
+
     if(flag){
         initialize_game()
         flag = false
     }
-    function changestate(){
-        if(game_fen === 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR')
-            setGame_fen('k7/5p2/3n4/3PP3/N1N2PPK/p5r1/2pQ2q1/7b')
-        else
-            setGame_fen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR')
-    }
+
     function print_move(from,to){
         if(from && to){
             player_move(from, to, 0)
@@ -442,9 +541,9 @@ function Chess() {
     }
 
     return (
-        <div>
-            <Chessboard fen = {game_fen} ></Chessboard>
+        <div className = 'game-display'>
             <UserInput query = {print_move}></UserInput>
+            <Chessboard fen = {game_fen} ></Chessboard>
             <div className = 'bot-move'>
                 <button id = 'bot-move-btn' onClick = {bot_move}>Bot move</button>
             </div>
