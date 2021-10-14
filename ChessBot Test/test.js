@@ -434,6 +434,7 @@ for (let i = 0 ; i < ans.length ; i++){
 
 
 ans = generate_moves_each_step(fen,4,'w')
+console.log(ans)
 console.log(ans.length)
 
 //console.log(next_move(ans,0,ans.length - 1,3,1,'w'))

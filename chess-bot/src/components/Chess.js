@@ -333,7 +333,6 @@ function generate_moves_each_step(fen,n,color){
     let moves_all_step = [[fen]], temp_moves
 
     for(let i = 0 ; i < n ; i++){
-
         temp_moves = moves_all_step
         moves_all_step = []
 
@@ -341,7 +340,7 @@ function generate_moves_each_step(fen,n,color){
 
             moves_each_step = []
 
-            for(let l = 0 ; l < 63 ; l++){
+            for(let l = 0 ; l <= 63 ; l++){
 
                 pos = number_to_coordinate(l)
                 board = generate_board(temp_moves[j][i])
@@ -352,7 +351,7 @@ function generate_moves_each_step(fen,n,color){
 
             }
 
-            shuffleArray(moves_each_step);
+            shuffleArray(moves_each_step)
 
             for(let move_step = 0 ; move_step < moves_each_step.length ; move_step++){
                 moves_all_step.push([...temp_moves[j],moves_each_step[move_step]])
@@ -447,7 +446,7 @@ function check(fen, color){
         temp = generate_board(possible_moves[i][1])
         flag = false
 
-        for(let j = 0 ; j < 63 ; j++){
+        for(let j = 0 ; j <= 63 ; j++){
             if(temp[j] && temp[j].color === color && temp[j].piece === 'k'){
                 flag = true
                 break
@@ -486,9 +485,11 @@ function Chess() {
         if(turn === player)
             return
 
-        let possible_moves
-        let temp, check_temp
+        let possible_moves = generate_moves_each_step(game_fen , difficulty_level , player_color[bot])
+        let temp = next_move(possible_moves , 0 , possible_moves.length - 1 , difficulty_level , 1 , player_color[bot])
+        let check_temp
 
+        
         //-----------------------------------------
         let count = 0
         //-----------------------------------------
@@ -505,9 +506,10 @@ function Chess() {
 
         }while(check(temp[0][0][1] , player_color[bot]))
 
+        
         setGame_fen(temp[0][0][1])
         setGame_board(generate_board(game_fen))
-        //turn = player
+        turn = player
     }
     
     function player_move(from , to, player){
